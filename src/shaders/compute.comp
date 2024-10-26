@@ -2,6 +2,9 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 #define WORKGROUP_SIZE 32
+#define GRAVITY_MAG 9.8
+#define GRAVITY_ACC 4.0
+
 layout(local_size_x = WORKGROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform CameraBufferObject {
@@ -36,6 +39,20 @@ struct Blade {
 // 	  uint firstInstance; // = 0
 // } numBlades;
 
+layout(set = 2, binding = 0) buffer Blades {
+	Blade blades[];
+};
+
+layout(set = 2, binding = 1) buffer CulledBlades {
+	Blade culledBlades[];
+};
+
+layout(set = 2, binding = 2) buffer NumBlades {
+	uint vertexCount;   // Write the number of blades remaining here
+	uint instanceCount; // = 1
+	uint firstVertex;   // = 0
+	uint firstInstance; // = 0
+} numBlades;
 
 bool inBounds(float value, float bounds) {
     return (value >= -bounds) && (value <= bounds);
@@ -49,9 +66,45 @@ void main() {
 	barrier(); // Wait till all threads reach this point
 
     // TODO: Apply forces on every blade and update the vertices in the buffer
+	uint index = gl_GlobalInvocationID.x;
+	if (index >= blades.length()) {
+			return;
+	}
+
+	Blade blade = blades[index];
+	// v0
+	vec3 position = blade.v0.xyz;
+	float direction = blade.v0.w;
+	// v1
+	vec3 bezierPoint = blade.v1.xyz;
+	float height = blade.v1.w;
+	//v2
+	vec3 modeGuide = blade.v2.xyz;
+	float width = blade.v2.w;
+	//up
+	vec3 bladeUp = blade.up.xyz;
+	float stiffness = blade.up.w;
+
+	// Apply Gravity
+	vec4 D = vec4(0.0, -GRAVITY_MAG, 0.0, -GRAVITY_ACC);
+	vec3 gE = normalize(D.yxz) * D.w;
+	vec3 gF = 0.25 * abs(gE) * direction;
+	vec3 g = gE + gF;
+
+	// Apply recovery
+	vec4 iv2 = vec4(position + bladeUp * height, width);
+	vec4 r = (iv2 - blade.v2) * stiffness;
+
+	// Apply wind
+	vec3 windDirection =  vec3(sin(blade.v0.x + deltaTime), 0.0, cos(blade.v0.z + deltaTime)) * 0.5;
+	vec3 windAlignment = vec3(0.0, 0.0, 0.0);
+	//test
+	vec3 wind = windDirection + windAlignment;
 
 	// TODO: Cull blades that are too far away or not in the camera frustum and write them
 	// to the culled blades buffer
 	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
 	// You want to write the visible blades to the buffer without write conflicts between threads
+
+
 }

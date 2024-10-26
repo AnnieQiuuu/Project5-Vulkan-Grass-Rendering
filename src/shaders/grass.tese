@@ -42,10 +42,12 @@ void main() {
 	vec3 t0 = normalize(b-a);
 	vec3 n = normalize(cross(t0, t1));
 
-	// t = u
-	vec3 position = (1.0 - u) * c0 + u * c1;
+	// t = u, quad shape, the following is quadratic shape 
+	float t = u + 0.5 * v - u * v;
+	vec3 position = (1.0 - t) * c0 + t * c1;
 	outPosition = position;
 	outNormal = n;
+
 
 	gl_Position = camera.proj * camera.view * vec4(position,1.0);
 	gl_Position = gl_Position + vec4(0.0, 0.0, 0.0, 1.0);
