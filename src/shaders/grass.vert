@@ -20,6 +20,10 @@ layout(location = 3) out vec4 outUp;
 
 out gl_PerVertex {
     vec4 gl_Position;
+	//ERROR DEBUGG: pass emtpy arrays to avoid error
+	//float gl_PointSize;
+    //float gl_ClipDistance[];
+    //float gl_CullDistance[];
 };
 
 void main() {

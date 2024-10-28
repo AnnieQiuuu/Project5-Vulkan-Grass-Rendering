@@ -17,7 +17,14 @@ void main() {
     float gradient = inPosition.y;
     vec3 bottomColor = vec3(0.1, 0.6, 0.1);
     vec3 topColor = vec3(0.4, 0.9, 0.4);
-    vec3 color = mix(bottomColor, topColor, clamp(gradient, 0.0, 1.0));
+    //vec3 color = mix(bottomColor, topColor, clamp(gradient, 0.0, 1.0));   
+    //outColor = vec4(color, 1.0);
+
+    //lighting
+    vec3 lightDir = normalize(vec3(1.0, 1.0, 0.0));
+    float intensity = max(dot(inNormal, lightDir), 0.0);
+    vec3 baseColor = vec3(0.4, 0.9, 0.4);
+    vec3 color = intensity * baseColor;
     outColor = vec4(color, 1.0);
     //outColor = vec4(1.0);
 }

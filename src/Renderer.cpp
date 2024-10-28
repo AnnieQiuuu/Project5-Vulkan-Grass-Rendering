@@ -200,22 +200,22 @@ void Renderer::CreateComputeDescriptorSetLayout() {
     // will be stored at each binding
     // Slides: 38
     VkDescriptorSetLayoutBinding bladesLayoutBinding = {};
-    bladesLayoutBinding.binding = 0;
-    bladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    bladesLayoutBinding.descriptorCount = 1;
-    bladesLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-    bladesLayoutBinding.pImmutableSamplers = nullptr;
+    bladesLayoutBinding.binding = 0; // index
+    bladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER; // set as read and write for now
+    bladesLayoutBinding.descriptorCount = 1; // 1 buffer associate with binding
+    bladesLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT; // compute shader stage
+    bladesLayoutBinding.pImmutableSamplers = nullptr; // not sampler
 
     VkDescriptorSetLayoutBinding culledBladesLayoutBinding = {};
     culledBladesLayoutBinding.binding = 1;
-    culledBladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    culledBladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER; 
     culledBladesLayoutBinding.descriptorCount = 1;
     culledBladesLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
     culledBladesLayoutBinding.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutBinding numBladesLayoutBinding = {};
     numBladesLayoutBinding.binding = 2;
-    numBladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    numBladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER; //VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER can't be used for writing
     numBladesLayoutBinding.descriptorCount = 1;
     numBladesLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
     numBladesLayoutBinding.pImmutableSamplers = nullptr;
@@ -250,6 +250,7 @@ void Renderer::CreateDescriptorPool() {
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER , 1 },
 
         // TODO: Add any additional types and counts of descriptors you will need to allocate
+        
         // Compute descriptors: Blades, culled blades, num blades
 		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER , static_cast<uint32_t>(scene->GetBlades().size() * 3)},
     };
@@ -358,8 +359,8 @@ void Renderer::CreateGrassDescriptorSets() {
     // This should involve creating descriptor sets which point to the model matrix of each group of grass blades
     grassDescriptorSets.resize(scene->GetBlades().size());
 
-    // Describe the descriptor set
-    //Slides: 40
+    // Describe the descriptor set, descriptor pool, and allocate descriptor sets
+    // Slides: 40
     VkDescriptorSetLayout layouts[] = { modelDescriptorSetLayout };
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -374,14 +375,18 @@ void Renderer::CreateGrassDescriptorSets() {
 
     // Slides: 41
     std::vector<VkWriteDescriptorSet> descriptorWrites(grassDescriptorSets.size());
-    //  point to the model matrix of each group of grass blades
-    grassDescriptorSets.resize(scene->GetBlades().size());
-    for (uint32_t i = 0; i < scene->GetBlades().size(); ++i) {
-        VkDescriptorBufferInfo modelBufferInfo = {};
-        modelBufferInfo.buffer = scene->GetBlades()[i]->GetModelBuffer();
-        modelBufferInfo.offset = 0;
-        modelBufferInfo.range = sizeof(ModelBufferObject); // mat4 model matrix
 
+    for (uint32_t i = 0; i < scene->GetBlades().size(); ++i) {
+        // provides Vulkan with details about the specific buffer to bind to the descriptor set --> model matrix
+        VkDescriptorBufferInfo modelBufferInfo = {};
+        // buffer handle, get the buffer from the grass blade modle
+        modelBufferInfo.buffer = scene->GetBlades()[i]->GetModelBuffer();
+        // no offset to start at the beginning of the buffer
+        modelBufferInfo.offset = 0;
+        // mat4 model matrix
+        modelBufferInfo.range = sizeof(ModelBufferObject);
+
+        //sets up a VkWriteDescriptorSet to update grassDescriptorSets with the modelBufferInfo
         descriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[i].dstSet = grassDescriptorSets[i];
         descriptorWrites[i].dstBinding = 0;
@@ -460,11 +465,16 @@ void Renderer::CreateComputeDescriptorSets() {
 		 culledBladesBufferInfo.buffer = scene->GetBlades()[i]->GetCulledBladesBuffer();
 		 culledBladesBufferInfo.offset = 0;
 		 culledBladesBufferInfo.range = sizeof(Blade) * NUM_BLADES;
+         //printf("culledBladesBufferInfo buffer: %d\n", culledBladesBufferInfo.buffer);
+         //printf("culledBladesBufferInfo.range: %d\n", culledBladesBufferInfo.range);
 
 		 VkDescriptorBufferInfo numBladesBufferInfo = {};
 		 numBladesBufferInfo.buffer = scene->GetBlades()[i]->GetNumBladesBuffer();
 		 numBladesBufferInfo.offset = 0;
-		 numBladesBufferInfo.range = sizeof(Blade) * NUM_BLADES;
+		// numBladesBufferInfo.range = sizeof(Blade) * NUM_BLADES;
+         numBladesBufferInfo.range = 16U;
+         //printf("numBladesBufferInfo buffer: %d\n", numBladesBufferInfo.buffer);//why it changing?
+         //printf("numBladesBufferInfo.range: %d\n", numBladesBufferInfo.range);//524288
 
 		 descriptorWrites[3 * i + 0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		 descriptorWrites[3 * i + 0].dstSet = computeDescriptorSets[i];
@@ -848,6 +858,7 @@ void Renderer::CreateComputePipeline() {
     // Set up programmable shaders
     VkShaderModule computeShaderModule = ShaderModule::Create("shaders/compute.comp.spv", logicalDevice);
 
+    // Set up the compute shader stage
     VkPipelineShaderStageCreateInfo computeShaderStageInfo = {};
     computeShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     computeShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
@@ -998,6 +1009,7 @@ void Renderer::RecordComputeCommandBuffer() {
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = 1;
 
+    // Allocate command buffer
     if (vkAllocateCommandBuffers(logicalDevice, &allocInfo, &computeCommandBuffer) != VK_SUCCESS) {
         throw std::runtime_error("Failed to allocate command buffers");
     }
@@ -1023,6 +1035,7 @@ void Renderer::RecordComputeCommandBuffer() {
 
     // TODO: For each group of blades bind its descriptor set and dispatch
     for (uint32_t i = 0; i < scene->GetBlades().size(); ++i) {
+        // set = 2
         vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 2, 1, &computeDescriptorSets[i], 0, nullptr);
         
         // Dispatch
@@ -1089,6 +1102,8 @@ void Renderer::RecordCommandBuffers() {
         }
 
         vkCmdPipelineBarrier(commandBuffers[i], VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT, 0, 0, nullptr, barriers.size(), barriers.data(), 0, nullptr);
+        //vkCmdPipelineBarrier(commandBuffers[i], VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT, 0, 0, nullptr, barriers.size(), barriers.data(), 0, nullptr);
+
 
         // Bind the camera descriptor set. This is set 0 in all pipelines so it will be inherited
         vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelineLayout, 0, 1, &cameraDescriptorSet, 0, nullptr);
@@ -1129,6 +1144,7 @@ void Renderer::RecordCommandBuffers() {
             // Draw
             // TODO: Uncomment this when the buffers are populated
              vkCmdDrawIndirect(commandBuffers[i], scene->GetBlades()[j]->GetNumBladesBuffer(), 0, 1, sizeof(BladeDrawIndirect));
+             //printf("BladeDrawIndirect size %d \n", sizeof(BladeDrawIndirect));
         }
 
         // End render pass
