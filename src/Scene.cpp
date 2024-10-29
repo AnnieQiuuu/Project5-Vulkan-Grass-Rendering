@@ -29,6 +29,7 @@ void Scene::UpdateTime() {
     startTime = currentTime;
 
     time.deltaTime = nextDeltaTime.count();
+    //printf("deltaTime: %f\n", time.deltaTime);
     time.totalTime += time.deltaTime;
 
     memcpy(mappedData, &time, sizeof(Time));

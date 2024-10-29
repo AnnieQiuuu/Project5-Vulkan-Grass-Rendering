@@ -33,6 +33,7 @@ Blades::Blades(Device* device, VkCommandPool commandPool, float planeDim) : Mode
 
         // Up vector and stiffness coefficient (up)
         float stiffness = MIN_BEND + (generateRandomFloat() * (MAX_BEND - MIN_BEND));
+        //printf("stiffness: %f\n", stiffness);
         currentBlade.up = glm::vec4(bladeUp, stiffness);
 
         blades.push_back(currentBlade);

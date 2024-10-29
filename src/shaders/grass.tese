@@ -31,7 +31,8 @@ void main() {
 	//width w of the blade
 	float w = inV2[0].w;
 	//bitangent t1 is given directly by the direction vector along the width of the blade
-	vec3 t1 = normalize(vec3(cos(inV0[0].w), 0.0, sin(inV0[0].w)));
+	vec3 t1 = normalize(cross(inV0[0].xyz,inUp[0].xyz));
+	//vec3 t1 = normalize(vec3(cos(inV0[0].w), 0.0, sin(inV0[0].w)));
 
 	vec3 a = v0 + v * (v1 - v0);
 	vec3 b = v1 + v * (v2 - v1);
@@ -47,7 +48,6 @@ void main() {
 	vec3 position = (1.0 - t) * c0 + t * c1;
 	outPosition = position;
 	outNormal = n;
-
 
 	gl_Position = camera.proj * camera.view * vec4(position,1.0);
 	gl_Position = gl_Position + vec4(0.0, 0.0, 0.0, 1.0);
