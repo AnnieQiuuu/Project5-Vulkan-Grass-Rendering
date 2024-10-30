@@ -165,12 +165,11 @@ void main() {
 	// to the culled blades buffer
 	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
 	// You want to write the visible blades to the buffer without write conflicts between threads
-	bool cull = false;
 	vec3 camPos = inverse(camera.view)[3].xyz;
 
 	//-------------------Orientation culling-------------------
 	vec3 viewDirection = normalize(camPos - position); // Dirc in Paper
-	if(abs(dot(viewDirection, direction)) < 0.4){
+	if(abs(dot(viewDirection, direction)) <= 0.1){
 		return;
 	}
 
@@ -192,7 +191,7 @@ void main() {
 	float n = 10.0;
 	if(mod(index,n) >= int(floor(n * (1.0 - dProj/maxDistance)))){
 		return;
-	}
+	}	
 
 	// Write non-culled blades to culledBlades buffer
 	uint outputIndex = atomicAdd(numBlades.vertexCount, 1);
