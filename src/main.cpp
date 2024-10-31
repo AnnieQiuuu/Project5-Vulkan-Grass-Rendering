@@ -154,6 +154,7 @@ int main() {
         glfwPollEvents();
         scene->UpdateTime();
         renderer->Frame();
+#if 0 // for fps
         frameCount++;
         auto currentTime = glfwGetTime();
         if (currentTime - lastTime >= 1.0) {
@@ -163,6 +164,7 @@ int main() {
 			lastTime = currentTime;
 		}
         std::cout << "FPS: " << fps / totalTime << std::endl;
+#endif
     }
  
     vkDeviceWaitIdle(device->GetVkDevice());

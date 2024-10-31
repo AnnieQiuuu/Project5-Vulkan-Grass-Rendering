@@ -47,14 +47,6 @@ void main() {
     float distance = length(camPos - bladePos);
     float tessLevel = getTessLevel(distance);
 
-    if (distance > 10.0) {
-        gl_TessLevelInner[0] = 0.0;
-        gl_TessLevelInner[1] = 0.0;
-        gl_TessLevelOuter[0] = 0.0;
-        gl_TessLevelOuter[1] = 0.0;
-        gl_TessLevelOuter[2] = 0.0;
-        gl_TessLevelOuter[3] = 0.0;
-    }
 #if tessLevelOn
 	// TODO: Set level of tesselation
     gl_TessLevelInner[0] = tessLevel;

@@ -109,7 +109,6 @@ void main() {
 
 	// direction vector along the blade width
 	vec3 direction = vec3(cos(orientation),0.0, sin(orientation));
-	//vec3 direction = vec3(sin(orientation),0.0, cos(orientation));
 
 	//-------------------Apply recovery-------------------
 	vec3 iv2 = position + bladeUp * height;
@@ -188,10 +187,10 @@ void main() {
 #endif
 #if OrientationCulling
 	//-------------------Orientation culling-------------------
-	vec3 viewDirection = normalize(camPos - blade.v0.xyz); // Dirc in Paper
-	vec4 viewDirectionC = camera.view * vec4(viewDirection, 1.0);
-	vec4 viewDirectionD = camera.view * vec4(direction, 0.0); // Dird in Paper
-	if(abs(dot(normalize(viewDirectionC), normalize(viewDirectionD))) >= 0.9){
+	vec3 viewDirection = normalize(camPos - blade.v0.xyz); 
+	vec4 DirectionC = camera.view * vec4(viewDirection, 1.0);// Dirc in Paper
+	vec4 DirectionD = camera.view * vec4(direction, 0.0); // Dird in Paper
+	if(abs(dot(normalize(DirectionC), normalize(DirectionD))) >= 0.9){
 		return;
 	}
 
