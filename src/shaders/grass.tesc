@@ -1,6 +1,6 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
-
+#define tessLevelOn 1
 layout(vertices = 1) out;
 
 layout(set = 0, binding = 0) uniform CameraBufferObject {
@@ -55,7 +55,7 @@ void main() {
         gl_TessLevelOuter[2] = 0.0;
         gl_TessLevelOuter[3] = 0.0;
     }
-
+#if tessLevelOn
 	// TODO: Set level of tesselation
     gl_TessLevelInner[0] = tessLevel;
     gl_TessLevelInner[1] = tessLevel;
@@ -63,5 +63,13 @@ void main() {
     gl_TessLevelOuter[1] = tessLevel;
     gl_TessLevelOuter[2] = tessLevel;
     gl_TessLevelOuter[3] = tessLevel;
+#else
+	gl_TessLevelInner[0] = 12.0;
+	gl_TessLevelInner[1] = 12.0;
+	gl_TessLevelOuter[0] = 12.0;
+	gl_TessLevelOuter[1] = 12.0;
+	gl_TessLevelOuter[2] = 12.0;
+	gl_TessLevelOuter[3] = 12.0;
+#endif
 
 }

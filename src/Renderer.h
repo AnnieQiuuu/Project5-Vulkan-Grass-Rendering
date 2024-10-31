@@ -78,6 +78,7 @@ private:
     VkImage depthImage;
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
+    VkSampler depthSampler;// Occulusion
     std::vector<VkFramebuffer> framebuffers;
 
     std::vector<VkCommandBuffer> commandBuffers;

@@ -220,6 +220,15 @@ void Renderer::CreateComputeDescriptorSetLayout() {
     numBladesLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
     numBladesLayoutBinding.pImmutableSamplers = nullptr;
 
+    //Occlusion culling (extra credit)
+    //VkDescriptorSetLayoutBinding depthMapLayoutBinding = {};
+    //depthMapLayoutBinding.binding = 3; // Binding index for depth map
+    //depthMapLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    //depthMapLayoutBinding.descriptorCount = 1;
+    //depthMapLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    //depthMapLayoutBinding.pImmutableSamplers = nullptr;
+
+
     std::vector<VkDescriptorSetLayoutBinding> bindings = { bladesLayoutBinding, culledBladesLayoutBinding, numBladesLayoutBinding };
 
     // Create the descriptor set layout
@@ -253,6 +262,9 @@ void Renderer::CreateDescriptorPool() {
         
         // Compute descriptors: Blades, culled blades, num blades
 		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER , static_cast<uint32_t>(scene->GetBlades().size() * 3)},
+
+        //Occlusion culling (extra credit)
+        //{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER , static_cast<uint32_t>(scene->GetModels().size() + scene->GetBlades().size()) },
     };
 
     VkDescriptorPoolCreateInfo poolInfo = {};
@@ -452,8 +464,8 @@ void Renderer::CreateComputeDescriptorSets() {
      if (vkAllocateDescriptorSets(logicalDevice, &allocInfo, computeDescriptorSets.data()) != VK_SUCCESS) {
 		 throw std::runtime_error("Failed to allocate compute descriptor set");
 	 }
-
      std::vector<VkWriteDescriptorSet> descriptorWrites(3 * computeDescriptorSets.size());
+     //std::vector<VkWriteDescriptorSet> descriptorWrites(4 * computeDescriptorSets.size());
 
      for (uint32_t i = 0; i < scene->GetBlades().size(); ++i) {
 		 VkDescriptorBufferInfo bladesBufferInfo = {};
@@ -476,6 +488,7 @@ void Renderer::CreateComputeDescriptorSets() {
          //printf("numBladesBufferInfo buffer: %d\n", numBladesBufferInfo.buffer);//why it changing?
          //printf("numBladesBufferInfo.range: %d\n", numBladesBufferInfo.range);//524288
 
+#if 1
 		 descriptorWrites[3 * i + 0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		 descriptorWrites[3 * i + 0].dstSet = computeDescriptorSets[i];
 		 descriptorWrites[3 * i + 0].dstBinding = 0;
@@ -505,6 +518,53 @@ void Renderer::CreateComputeDescriptorSets() {
          descriptorWrites[3 * i + 2].pBufferInfo = &numBladesBufferInfo;
          descriptorWrites[3 * i + 2].pImageInfo = nullptr;
          descriptorWrites[3 * i + 2].pTexelBufferView = nullptr;
+#endif
+#if 0
+         // Bind image and sampler resources to the descriptor
+         VkDescriptorImageInfo depthImageInfo = {};
+         depthImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+         depthImageInfo.imageView = depthImageView;
+         depthImageInfo.sampler = depthSampler;
+
+         descriptorWrites[4 * i + 0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+         descriptorWrites[4 * i + 0].dstSet = computeDescriptorSets[i];
+         descriptorWrites[4 * i + 0].dstBinding = 0;
+         descriptorWrites[4 * i + 0].dstArrayElement = 0;
+         descriptorWrites[4 * i + 0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+         descriptorWrites[4 * i + 0].descriptorCount = 1;
+         descriptorWrites[4 * i + 0].pBufferInfo = &bladesBufferInfo;
+         descriptorWrites[4 * i + 0].pImageInfo = nullptr;
+         descriptorWrites[4 * i + 0].pTexelBufferView = nullptr;
+
+         descriptorWrites[4 * i + 1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+         descriptorWrites[4 * i + 1].dstSet = computeDescriptorSets[i];
+         descriptorWrites[4 * i + 1].dstBinding = 1;
+         descriptorWrites[4 * i + 1].dstArrayElement = 0;
+         descriptorWrites[4 * i + 1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+         descriptorWrites[4 * i + 1].descriptorCount = 1;
+         descriptorWrites[4 * i + 1].pBufferInfo = &culledBladesBufferInfo;
+         descriptorWrites[4 * i + 1].pImageInfo = nullptr;
+         descriptorWrites[4 * i + 1].pTexelBufferView = nullptr;
+
+         descriptorWrites[4 * i + 2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+         descriptorWrites[4 * i + 2].dstSet = computeDescriptorSets[i];
+         descriptorWrites[4 * i + 2].dstBinding = 2;
+         descriptorWrites[4 * i + 2].dstArrayElement = 0;
+         descriptorWrites[4 * i + 2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+         descriptorWrites[4 * i + 2].descriptorCount = 1;
+         descriptorWrites[4 * i + 2].pBufferInfo = &numBladesBufferInfo;
+         descriptorWrites[4 * i + 2].pImageInfo = nullptr;
+         descriptorWrites[4 * i + 2].pTexelBufferView = nullptr;
+
+         descriptorWrites[4 * i + 3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+         descriptorWrites[4 * i + 3].dstSet = computeDescriptorSets[i];
+         descriptorWrites[4 * i + 3].dstBinding = 3; // Binding for depth map
+         descriptorWrites[4 * i + 2].dstArrayElement = 0;
+         descriptorWrites[4 * i + 3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+         descriptorWrites[4 * i + 3].descriptorCount = 1;
+         descriptorWrites[4 * i + 3].pImageInfo = &depthImageInfo;
+         //descriptorWrites[4 * i + 3].pTexelBufferView = nullptr;
+#endif
      }
      // Update descriptor sets
      vkUpdateDescriptorSets(logicalDevice, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -937,16 +997,34 @@ void Renderer::CreateFrameResources() {
         swapChain->GetVkExtent().height,
         depthFormat,
         VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, // Add for sampling the depth image
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         depthImage,
         depthImageMemory
     );
 
     depthImageView = Image::CreateView(device, depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
-    
+    if (depthImageView == VK_NULL_HANDLE) {
+    throw std::runtime_error("Failed to create depth image view");
+    }
     // Transition the image for use as depth-stencil
     Image::TransitionLayout(device, graphicsCommandPool, depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+    // CREATE DEPTH SAMPLER (Occulusion)
+    //VkSamplerCreateInfo samplerInfo = {};
+    //samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    //samplerInfo.magFilter = VK_FILTER_NEAREST;
+    //samplerInfo.minFilter = VK_FILTER_NEAREST;
+    //samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    //samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    //samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    //samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    //samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    //samplerInfo.compareEnable = VK_FALSE;
+    //samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    //if (vkCreateSampler(logicalDevice, &samplerInfo, nullptr, &depthSampler) != VK_SUCCESS) {
+    //    throw std::runtime_error("Failed to create depth sampler");
+    //}
 
     
     // CREATE FRAMEBUFFERS
@@ -1023,6 +1101,8 @@ void Renderer::RecordComputeCommandBuffer() {
     if (vkBeginCommandBuffer(computeCommandBuffer, &beginInfo) != VK_SUCCESS) {
         throw std::runtime_error("Failed to begin recording compute command buffer");
     }
+    //VkFormat depthFormat = device->GetInstance()->GetSupportedFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    //Image::TransitionLayout(device, computeCommandPool, depthImage, depthFormat, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     // Bind to the compute pipeline
     vkCmdBindPipeline(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
@@ -1042,6 +1122,9 @@ void Renderer::RecordComputeCommandBuffer() {
         // Slides: 69
         vkCmdDispatch(computeCommandBuffer, (NUM_BLADES / WORKGROUP_SIZE), 1, 1);
     }
+
+    // Execute compute shader here
+    //Image::TransitionLayout(device, computeCommandPool, depthImage, depthFormat, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
     // ~ End recording ~
     if (vkEndCommandBuffer(computeCommandBuffer) != VK_SUCCESS) {
@@ -1228,4 +1311,6 @@ Renderer::~Renderer() {
     DestroyFrameResources();
     vkDestroyCommandPool(logicalDevice, computeCommandPool, nullptr);
     vkDestroyCommandPool(logicalDevice, graphicsCommandPool, nullptr);
+
+    //vkDestroySampler(logicalDevice, depthSampler, nullptr);
 }

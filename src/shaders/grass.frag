@@ -16,13 +16,13 @@ void main() {
     // TODO: Compute fragment color
 
     //lighting
-    vec3 lightDir = normalize(vec3(0.2, 1.0, 0.0));
+    vec3 lightDir = normalize(vec3(0.0, 0.5, 0.0));
     float gradient = inPosition.y;
     float intensity = max(dot(inNormal, lightDir), 0.0);
-    vec3 bottomColor = vec3(0.1, 0.6, 0.1);
-    vec3 topColor = vec3(0.4, 0.9, 0.4);
+    vec3 bottomColor = vec3(0.1, 0.7, 0.1);
+    vec3 topColor = vec3(0.4, 1.0, 0.4);
     vec3 baseColor = mix(bottomColor, topColor, clamp(gradient, 0.0, 1.0));
-    vec3 ambient = vec3(0.1, 0.25, 0.1);
+    vec3 ambient = vec3(0.1, 0.35, 0.0);
     vec3 color = intensity * baseColor + ambient;
     outColor = vec4(color, 1.0);
 }
