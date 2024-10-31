@@ -25,6 +25,9 @@ This project is an implementation of the paper, [Responsive Real-Time Grass Rend
 
 ## Screenshot
 
+### Final demo
+![](./img/demo.gif)
+
 ### Simulating Forces
 This section explains how forces are simulated on grass blades that represented as Bezier curves within a compute shader.
 
